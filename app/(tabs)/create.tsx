@@ -1,118 +1,159 @@
-// ... (Existing code) ...
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import { supabase } from '../../lib/supabase'; // путь к supabase клиенту проверь по своей структуре
+import { uploadImage } from '../../utils/uploadImage'; // путь проверь
+import { Animal } from '../../types'; // если у тебя типы вынесены в отдельный файл
 
-      const [selectedAnimal, setSelectedAnimal] = useState<string | null>(null);
-      const [animals, setAnimals] = useState<Animal[]>([]);
+export default function CreateScreen() {
+  const [selectedAnimal, setSelectedAnimal] = useState<string | null>(null);
+  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [postText, setPostText] = useState('');
+  const [selectedImage, setSelectedImage] = useState<any>(null); // уточни тип при необходимости
+  const [postType, setPostType] = useState('regular');
+  const [location, setLocation] = useState<string | null>(null);
+  const [petTags, setPetTags] = useState<string[]>([]);
+  const [reward, setReward] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
 
-      useEffect(() => {
-        const fetchAnimals = async () => {
-          const { data: animalsData, error } = await supabase
-            .from('animals')
-            .select()
-            .eq('owner_id', user?.id);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error fetching user:', error);
+        return;
+      }
+      setUser(data?.user);
+    };
+    getUser();
+  }, []);
 
-          if (error) {
-            console.error('Error fetching animals:', error);
-            return;
-          }
+  useEffect(() => {
+    const fetchAnimals = async () => {
+      if (!user?.id) return;
+      const { data: animalsData, error } = await supabase
+        .from('animals')
+        .select()
+        .eq('owner_id', user.id);
 
-          setAnimals(animalsData || []);
-        };
+      if (error) {
+        console.error('Error fetching animals:', error);
+        return;
+      }
 
-        fetchAnimals();
-      }, [user]);
+      setAnimals(animalsData || []);
+    };
 
-      const handlePost = async () => {
-        if (!selectedImage || !postText.trim()) return;
+    fetchAnimals();
+  }, [user]);
 
-        try {
-          setIsPosting(true);
-          setUploadError(null);
-          const { data: { user }, error } = await supabase.auth.getUser();
-          if (error || !user) throw new Error('No user');
+  const handlePost = async () => {
+    if (!selectedImage || !postText.trim()) return;
 
-          const imageUrl = await uploadImage(selectedImage);
+    try {
+      setIsPosting(true);
+      setUploadError(null);
 
-          await supabase.from('posts').insert([
-            {
-              user_id: user.id,
-              caption: postText.trim(),
-              image_url: imageUrl,
-              type: postType,
-              location,
-              tags: petTags,
-              reward: reward ? Number(reward) : null,
-              animal_id: selectedAnimal, // Add animal_id
-              created_at: new Date().toISOString(),
-            },
-          ]);
+      const imageUrl = await uploadImage(selectedImage);
 
-          // ... (Rest of the code) ...
-        } catch (err) {
-          // ... (Error handling) ...
-        } finally {
-          // ... (Cleanup) ...
-        }
-      };
+      await supabase.from('posts').insert([
+        {
+          user_id: user.id,
+          caption: postText.trim(),
+          image_url: imageUrl,
+          type: postType,
+          location,
+          tags: petTags,
+          reward: reward ? Number(reward) : null,
+          animal_id: selectedAnimal,
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-      return (
-        <ScrollView style={styles.container}>
-          {/* ... (Existing UI elements) ... */}
-
-          <View style={styles.animalSelector}>
-            <Text style={styles.selectorLabel}>Post on behalf of:</Text>
-            <View style={styles.animalOptions}>
-              <TouchableOpacity
-                style={[styles.animalOption, selectedAnimal === null && styles.selectedAnimalOption]}
-                onPress={() => setSelectedAnimal(null)}
-              >
-                <Text style={styles.animalOptionText}>You</Text>
-              </TouchableOpacity>
-              {animals.map((animal) => (
-                <TouchableOpacity
-                  key={animal.id}
-                  style={[styles.animalOption, selectedAnimal === animal.id && styles.selectedAnimalOption]}
-                  onPress={() => setSelectedAnimal(animal.id)}
-                >
-                  <Text style={styles.animalOptionText}>{animal.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* ... (Rest of the UI elements) ... */}
-        </ScrollView>
-      );
+      // сброс полей после публикации
+      setPostText('');
+      setSelectedImage(null);
+      setSelectedAnimal(null);
+      setPetTags([]);
+      setReward(null);
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setUploadError('Failed to create post');
+    } finally {
+      setIsPosting(false);
     }
+  };
 
-    // ... (Existing styles) ...
+  return (
+    <ScrollView style={styles.container}>
+      {/* UI элементов может быть больше — вставляй сюда форму */}
+      <View style={styles.animalSelector}>
+        <Text style={styles.selectorLabel}>Post on behalf of:</Text>
+        <View style={styles.animalOptions}>
+          <TouchableOpacity
+            style={[
+              styles.animalOption,
+              selectedAnimal === null && styles.selectedAnimalOption,
+            ]}
+            onPress={() => setSelectedAnimal(null)}
+          >
+            <Text style={styles.animalOptionText}>You</Text>
+          </TouchableOpacity>
+          {animals.map((animal) => (
+            <TouchableOpacity
+              key={animal.id}
+              style={[
+                styles.animalOption,
+                selectedAnimal === animal.id && styles.selectedAnimalOption,
+              ]}
+              onPress={() => setSelectedAnimal(animal.id)}
+            >
+              <Text style={styles.animalOptionText}>{animal.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
 
-    const styles = StyleSheet.create({
-      // ... (Existing styles) ...
-      animalSelector: {
-        marginBottom: 16,
-      },
-      selectorLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
-      },
-      animalOptions: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-      },
-      animalOption: {
-        backgroundColor: '#F2F2F7',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        marginRight: 8,
-        marginBottom: 8,
-      },
-      selectedAnimalOption: {
-        backgroundColor: '#FF9F1C',
-      },
-      animalOptionText: {
-        fontSize: 14,
-        color: '#333333',
-      },
-    });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  animalSelector: {
+    marginBottom: 16,
+  },
+  selectorLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  animalOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  animalOption: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedAnimalOption: {
+    backgroundColor: '#FF9F1C',
+  },
+  animalOptionText: {
+    fontSize: 14,
+    color: '#333333',
+  },
+});
