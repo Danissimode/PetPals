@@ -1,0 +1,96 @@
+🟣 Project Name: Pet Pals  
+🎯 Style Direction: Between Instagram (visual, social, warm) and LinkedIn (structured, trustworthy, clean)
+
+---
+
+Design every screen and interaction for **Pet Pals** with a balance of emotional engagement and informational structure.
+
+This app is a visual-first social platform for pets and their humans. Think Instagram for cuteness, LinkedIn for structure — and a unique twist: **pedigree trees for pets**.
+
+---
+
+### 🎨 Design Style Guidelines
+
+**Primary colors:**
+- 🟪 Primary: `#6C4AB6` (royal purple – premium, calm)
+- 🐾 Accent: `#FF9F1C` (warm amber – emotional, fun)
+- ⚪ Background: `#FAFAFA` (light grey/white)
+- 🔘 UI Gray: `#D6D6D6` / `#999999`
+- ✅ Success: `#00B894`, ❌ Error: `#D63031`
+
+**Fonts:**
+- `Inter` for default text (clean and readable)
+- Large headings use tight letter spacing and slight weight variation
+- Use dynamic scaling for mobile and web
+
+**Layout:**
+- Always mobile-first (but designed to scale to tablet/desktop)
+- Clean spacing using Tailwind's padding/margin scale
+- Avoid full-screen components unless intentional (e.g. modals, stories)
+
+**Iconography:**
+- Use `@phosphor-icons/react`
+- Use outlined/duotone icons for neutral actions, bold icons for call-to-actions
+
+---
+
+### 🌳 Pedigree Tree (Key Feature)
+This is the **signature feature** of Pet Pals — an interactive, visual family tree for pets.
+
+Guidelines for AI:
+- Always visualize relationships as a hierarchy or graph layout
+- Prioritize clarity over artistic design
+- Use avatars, names, breeds, and genders in nodes
+- Make branches collapsible
+- Add link from pet card to their tree view
+
+---
+
+### 🧠 AI Usage Guidelines
+
+When using AI to generate components or logic:
+
+1. Full working code only — **no markdown**, no placeholders
+2. Use Tailwind CSS — readable, optimized classes
+3. Include loading / error / empty states in every component
+4. Always annotate data assumptions and dynamic fields
+5. Use modern layout strategies: Flexbox or CSS Grid only
+6. Functional React components — no class-based
+7. Must be responsive and accessible (mobile first)
+8. Include `aria-*`, semantic tags, alt text where applicable
+9. For data: use Supabase-shaped mock data
+10. For icons/images: only `@phosphor-icons/react` and Unsplash
+
+---
+
+### ⚡ Code & Architecture Rules
+
+- Typed with TypeScript — strict mode
+- Structure:
+- No class components
+- No magic values — use constants where applicable
+- No monolithic components — split logic + view + UI
+
+---
+
+### 🚀 Optimization & UX Best Practices
+
+- Memoize list items, callbacks
+- Use `FlatList` / virtualization for long lists
+- Lazy-load components not needed above the fold
+- Show skeletons while loading
+- Use animation for story views, transitions
+- Prefer `router.push()` + deep links for navigation
+
+---
+
+### 🔒 Security
+
+- All protected routes use context/session-based gating
+- Use Supabase RLS at all times
+- Never fetch full datasets — only scoped queries
+- Obfuscate internal IDs if not needed
+
+---
+
+🎯 Final word: Pet Pals is not just another pet app — it's a **social ecosystem for animals with lineage, personality, and community**. Everything you design should reflect that.
