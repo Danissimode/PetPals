@@ -1,38 +1,33 @@
 import { Stack } from 'expo-router';
 
-const modalOptions = {
-  presentation: 'modal' as const,
-  animation: 'slide_from_bottom' as const,
-};
-
 export default function ProfileLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen
+      <Stack.Screen 
         name="index"
         options={{
           headerShown: false,
         }}
       />
-      <Stack.Screen
+      <Stack.Screen 
         name="edit"
         options={{
-          ...modalOptions,
+          presentation: 'modal',
           headerShown: true,
           title: 'Edit Profile',
         }}
       />
-      <Stack.Screen
+      <Stack.Screen 
         name="settings"
         options={{
-          ...modalOptions,
+          presentation: 'modal',
           headerShown: false,
         }}
       />
-      <Stack.Screen
+      <Stack.Screen 
         name="password"
         options={{
-          ...modalOptions,
+          presentation: 'modal',
           headerShown: false,
         }}
       />

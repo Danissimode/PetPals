@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Platform,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Camera, Calendar, Dna } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { Camera, Calendar, Dna, Award } from 'lucide-react-native';
 import { router } from 'expo-router';
 
 export default function AddPetScreen() {
@@ -26,55 +14,20 @@ export default function AddPetScreen() {
     hasPedigree: false,
   });
 
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [image, setImage] = useState(null);
 
-  const handleImageUpload = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
-
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      const iso = selectedDate.toISOString().split('T')[0];
-      setPetInfo({ ...petInfo, birthDate: iso });
-    }
-  };
-
-  const handleSave = async () => {
-    const { data, error } = await supabase.from('animals').insert([
-      {
-        name: petInfo.name,
-        type: petInfo.species,
-        breed: petInfo.breed,
-        birth_date: petInfo.birthDate || null,
-        color: petInfo.color,
-        metric_number: petInfo.metricNumber,
-        profile_picture: imageUri,
-        has_pedigree: petInfo.hasPedigree,
-      },
-    ]);
-
-    if (error) {
-      console.error('Error saving pet:', error.message);
-      return;
-    }
-
-    router.replace('/(tabs)/pets');
+  const handleSave = () => {
+    // Here would be the logic to save the pet
+    router.back();
   };
 
   return (
     <ScrollView style={styles.container}>
-      <TouchableOpacity style={styles.imageUpload} onPress={handleImageUpload}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+      <TouchableOpacity 
+        style={styles.imageUpload}
+        onPress={() => {/* Handle image upload */}}>
+        {image ? (
+          <Image source={{ uri: image }} style={styles.uploadedImage} />
         ) : (
           <View style={styles.uploadPlaceholder}>
             <Camera size={32} color="#666666" />
@@ -84,58 +37,70 @@ export default function AddPetScreen() {
       </TouchableOpacity>
 
       <View style={styles.form}>
-        {[
-          { label: 'Pet Name *', value: 'name', placeholder: 'Enter name' },
-          { label: 'Species *', value: 'species', placeholder: 'e.g. Dog, Cat' },
-          { label: 'Breed *', value: 'breed', placeholder: 'Enter breed' },
-          { label: 'Color', value: 'color', placeholder: 'Enter color' },
-          { label: 'Metric Number', value: 'metricNumber', placeholder: 'Optional ID' },
-        ].map(({ label, value, placeholder }) => (
-          <View style={styles.inputGroup} key={value}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-              style={styles.input}
-              value={petInfo[value as keyof typeof petInfo]}
-              onChangeText={(text) =>
-                setPetInfo({ ...petInfo, [value]: text })
-              }
-              placeholder={placeholder}
-            />
-          </View>
-        ))}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Pet Name *</Text>
+          <TextInput
+            style={styles.input}
+            value={petInfo.name}
+            onChangeText={(text) => setPetInfo({ ...petInfo, name: text })}
+            placeholder="Enter pet's name"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Species *</Text>
+          <TextInput
+            style={styles.input}
+            value={petInfo.species}
+            onChangeText={(text) => setPetInfo({ ...petInfo, species: text })}
+            placeholder="e.g., Dog, Cat"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Breed *</Text>
+          <TextInput
+            style={styles.input}
+            value={petInfo.breed}
+            onChangeText={(text) => setPetInfo({ ...petInfo, breed: text })}
+            placeholder="Enter breed"
+          />
+        </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Birth Date</Text>
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowDatePicker(true)}
-          >
+          <TouchableOpacity style={styles.dateInput}>
             <Calendar size={20} color="#666666" />
             <Text style={styles.dateText}>
               {petInfo.birthDate || 'Select birth date'}
             </Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              mode="date"
-              value={petInfo.birthDate ? new Date(petInfo.birthDate) : new Date()}
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            />
-          )}
         </View>
 
-        <TouchableOpacity
-          style={styles.pedigreeButton}
-          onPress={() =>
-            setPetInfo({ ...petInfo, hasPedigree: !petInfo.hasPedigree })
-          }
-        >
-          <Dna
-            size={24}
-            color={petInfo.hasPedigree ? '#FF9F1C' : '#666666'}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Color</Text>
+          <TextInput
+            style={styles.input}
+            value={petInfo.color}
+            onChangeText={(text) => setPetInfo({ ...petInfo, color: text })}
+            placeholder="Enter color"
           />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Metric Number</Text>
+          <TextInput
+            style={styles.input}
+            value={petInfo.metricNumber}
+            onChangeText={(text) => setPetInfo({ ...petInfo, metricNumber: text })}
+            placeholder="Enter metric number if available"
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.pedigreeButton}
+          onPress={() => setPetInfo({ ...petInfo, hasPedigree: !petInfo.hasPedigree })}>
+          <Dna size={24} color={petInfo.hasPedigree ? '#FF9F1C' : '#666666'} />
           <View style={styles.pedigreeInfo}>
             <Text style={styles.pedigreeTitle}>Has Pedigree</Text>
             <Text style={styles.pedigreeDescription}>
@@ -144,16 +109,10 @@ export default function AddPetScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            !petInfo.name || !petInfo.breed || !petInfo.species
-              ? styles.saveButtonDisabled
-              : {},
-          ]}
+        <TouchableOpacity 
+          style={[styles.saveButton, !petInfo.name && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={!petInfo.name || !petInfo.breed || !petInfo.species}
-        >
+          disabled={!petInfo.name}>
           <Text style={styles.saveButtonText}>Add Pet</Text>
         </TouchableOpacity>
       </View>
@@ -164,13 +123,15 @@ export default function AddPetScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F8F8',
   },
   imageUpload: {
     height: 200,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
   },
   uploadedImage: {
     width: '100%',

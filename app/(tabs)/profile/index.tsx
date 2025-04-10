@@ -1,130 +1,96 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import {
-  Award,
-  Heart,
-  MessageCircle,
-  Settings,
-  PawPrint as Paw,
-  Footprints,
-  LogOut,
-} from 'lucide-react-native';
+import { Award, Heart, MessageCircle, Settings, PawPrint as Paw, Footprints } from 'lucide-react-native';
+import ProfileHeader from '@/components/ProfileHeader';
 
-import { useAuth } from '@/providers/AuthProvider';
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/lib/supabase-types';
+// Mock user data
+const USER = {
+  name: 'Alex Johnson',
+  username: '@alexj',
+  bio: 'Dog lover & trainer. Passionate about helping pets find their forever homes.',
+  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
+  location: 'New York, NY',
+  memberSince: 'January 2023',
+  stats: {
+    posts: 48,
+    followers: 256,
+    following: 124,
+  },
+  badges: [
+    { id: '1', name: 'Super Rescuer', icon: '🏆' },
+    { id: '2', name: 'Pet Expert', icon: '🔍' },
+    { id: '3', name: 'Community Hero', icon: '⭐' },
+  ],
+};
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function ProfileScreen() {
-  const { session, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'activity'>('posts');
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [avatar, setAvatar] = useState<string | null>(null);
-
+  const [activeTab, setActiveTab] = useState('posts');
+  const [avatar, setAvatar] = useState(USER.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!session?.user.id) return;
+  const handleEditProfile = () => {
+    router.push('/profile/edit');
+  };
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select()
-        .eq('id', session.user.id)
-        .single();
+  const handleSettings = () => {
+    router.push('/profile/settings');
+  };
 
-      if (!error) {
-        setProfile(data);
-        setAvatar(data?.avatar_url || null);
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, [session]);
-
-  const handleEditProfile = () => router.push('/profile/edit');
-  const handleSettings = () => router.push('/profile/settings');
-  const handleMyPets = () => router.push('/pets');
-  const handleLogout = () => signOut();
+  const handleMyPets = () => {
+    router.push('/pets');
+  };
 
   const handleAvatarPress = () => {
     if (Platform.OS === 'web') {
       fileInputRef.current?.click();
     } else {
-      console.log('Native image picker logic');
+      // Handle native image picker
+      console.log('Open native image picker');
     }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || file.size > MAX_FILE_SIZE) return;
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      // Show error message for file size
+      return;
+    }
 
     const reader = new FileReader();
-    reader.onloadend = () => setAvatar(reader.result as string);
+    reader.onloadend = () => {
+      setAvatar(reader.result as string);
+    };
     reader.readAsDataURL(file);
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF9F1C" />
-      </View>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={{ color: '#999' }}>User not found</Text>
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={handleSettings}
-          style={styles.settingsButton}
-          accessibilityLabel="Settings"
-        >
-          <Settings size={24} color="#333" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.settingsButton}
-          accessibilityLabel="Logout"
-        >
-          <LogOut size={24} color="#D63031" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={handleSettings}
+            style={styles.settingsButton}
+            accessibilityLabel="Settings"
+            accessibilityHint="Open settings menu">
+            <Settings size={24} color="#333333" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={{ alignItems: 'center', marginTop: 12 }}>
-        <TouchableOpacity onPress={handleAvatarPress}>
-          <Image
-            source={{ uri: avatar || 'https://placekitten.com/200/200' }}
-            style={styles.avatar}
-          />
-        </TouchableOpacity>
-        <Text style={styles.name}>{profile.full_name}</Text>
-        <Text style={styles.username}>@{profile.username}</Text>
-        <Text style={styles.bio}>{profile.bio}</Text>
-      </View>
+      <ProfileHeader
+        avatar={avatar}
+        name={USER.name}
+        username={USER.username}
+        bio={USER.bio}
+        stats={USER.stats}
+        onAvatarPress={handleAvatarPress}
+        onEditProfile={handleEditProfile}
+      />
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.actionButton} onPress={handleEditProfile}>
@@ -138,47 +104,49 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabsContainer}>
-        {['posts', 'saved', 'activity'].map((tab) => (
+      <View style={styles.contentSection}>
+        <View style={styles.tabsContainer}>
           <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab as any)}
-          >
-            <Text
-              style={[styles.tabText, activeTab === tab && styles.activeTabText]}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
+            style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
+            onPress={() => setActiveTab('posts')}>
+            <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>Posts</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
+            onPress={() => setActiveTab('saved')}>
+            <Text style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}>Saved</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'activity' && styles.activeTab]}
+            onPress={() => setActiveTab('activity')}>
+            <Text style={[styles.tabText, activeTab === 'activity' && styles.activeTabText]}>Activity</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.emptyState}>
         {activeTab === 'posts' ? (
-          <>
+          <View style={styles.emptyState}>
             <MessageCircle size={48} color="#CCCCCC" />
             <Text style={styles.emptyStateTitle}>No posts yet</Text>
             <Text style={styles.emptyStateMessage}>
               Share your pet moments with the community
             </Text>
-          </>
+          </View>
         ) : activeTab === 'saved' ? (
-          <>
+          <View style={styles.emptyState}>
             <Heart size={48} color="#CCCCCC" />
             <Text style={styles.emptyStateTitle}>No saved posts yet</Text>
             <Text style={styles.emptyStateMessage}>
-              Posts you save will appear here
+              Posts you save will appear here for easy access
             </Text>
-          </>
+          </View>
         ) : (
-          <>
+          <View style={styles.emptyState}>
             <Award size={48} color="#CCCCCC" />
             <Text style={styles.emptyStateTitle}>No recent activity</Text>
             <Text style={styles.emptyStateMessage}>
               Your recent interactions and achievements will appear here
             </Text>
-          </>
+          </View>
         )}
       </View>
 
@@ -196,45 +164,23 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  loadingContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 16,
-    gap: 12,
+    paddingBottom: 8,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   settingsButton: {
     padding: 8,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 60,
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  username: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 6,
-  },
-  bio: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 8,
-    paddingHorizontal: 24,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -251,6 +197,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   actionButtonText: {
@@ -258,11 +208,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF9F1C',
   },
+  contentSection: {
+    flex: 1,
+  },
   tabsContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFEF',
-    marginTop: 12,
   },
   tab: {
     flex: 1,
